@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# 环境 / 凭据
+.env
+*.local
+
+# 系统
+.DS_Store
