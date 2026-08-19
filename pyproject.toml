@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jira-server-mcp"
+version = "1.0.0"
+description = "零依赖的 Jira Server / Data Center MCP 服务端，支持 Basic Auth 与 PAT，兼容 8.x 全版本（含 8.14 之前无 PAT 的旧版）"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [{ name = "zhao1749501038" }]
+keywords = ["mcp", "jira", "jira-server", "model-context-protocol", "atlassian", "data-center"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.scripts]
+jira-server-mcp = "jira_mcp_server:main"
+
+[tool.setuptools]
+py-modules = ["jira_mcp_server"]
