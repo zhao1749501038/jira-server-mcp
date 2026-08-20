@@ -18,9 +18,12 @@
 | `jira_whoami` | 验证登录、查看当前账号 |
 | `jira_get_projects` | 列出可见项目 |
 | `jira_search_issues` | JQL 搜索 |
-| `jira_get_issue` | 获取需求/Bug 详情 |
+| `jira_get_issue` | 获取详情、最近评论和自定义字段 |
+| `jira_get_create_fields` | 查询创建时的必填字段与枚举值 |
+| `jira_prepare_issue` | 创建前只读预检，不写 Jira |
 | `jira_create_issue` | 创建 Jira |
-| `jira_update_issue` | 修改标题/描述/优先级/标签 |
+| `jira_get_edit_fields` | 查询当前允许编辑的字段 |
+| `jira_update_issue` | 修改标准字段或自定义字段 |
 | `jira_add_comment` | 添加评论 |
 | `jira_get_transitions` | 查询当前可执行的状态流转 |
 | `jira_transition_issue` | 执行状态流转 |
@@ -32,12 +35,14 @@
 |---|---|---|
 | `JIRA_BASE_URL` | 是 | Jira 地址，如 `https://jira.yourcompany.com` |
 | `JIRA_USERNAME` | Basic Auth 必填 | Jira 用户名 |
-| `JIRA_PASSWORD` | Basic Auth 必填 | Jira 密码 |
+| `JIRA_PASSWORD` | Basic Auth 使用 | Jira 密码；macOS 可由钥匙串替代 |
 | `JIRA_TOKEN` | PAT 时使用 | Personal Access Token（8.14+），设置后优先使用 |
-| `JIRA_SSL_VERIFY` | 否 | 默认 `true`，自签证书报错时设 `false` |
+| `JIRA_KEYCHAIN_SERVICE` | macOS 可选 | 从系统钥匙串读取密码，可替代 `JIRA_PASSWORD` |
+| `JIRA_CA_BUNDLE` | 否 | 公司内部 CA 证书文件路径 |
+| `JIRA_SSL_VERIFY` | 否 | 默认 `true`；不建议关闭证书校验 |
 | `JIRA_TIMEOUT` | 否 | 请求超时秒数，默认 30 |
 
-> 认证方式：若设置了 `JIRA_TOKEN` 则用 Bearer Token（PAT），否则用 `JIRA_USERNAME` + `JIRA_PASSWORD` 做 Basic Auth。
+> 认证方式：若设置了 `JIRA_TOKEN` 则用 Bearer Token（PAT），否则用 `JIRA_USERNAME` + `JIRA_PASSWORD` 做 Basic Auth；macOS 也可用 `JIRA_KEYCHAIN_SERVICE` 从本人钥匙串读取密码。
 
 ## 安装与运行
 
@@ -111,12 +116,37 @@ claude mcp add --scope user jira \
 command = "/usr/bin/python3"
 args = ["/path/to/jira_mcp_server.py"]
 env = { JIRA_BASE_URL = "https://jira.yourcompany.com", JIRA_USERNAME = "your-username", JIRA_PASSWORD = "your-password" }
+default_tools_approval_mode = "writes"
 ```
+
+macOS 用户推荐使用一键安装器。它会把密码写入系统钥匙串，Codex 配置中不会出现密码：
+
+```bash
+python3 install_codex_macos.py \
+  --url https://jira.yourcompany.com \
+  --username your-username \
+  --name jira
+```
+
+安装器会先验证本人 Jira 身份，再写入 Codex 配置，并将所有写操作设为执行前确认。完成后重启 Codex 桌面应用或新建任务。
+
+## 推荐调用流程
+
+- 查询：直接使用 `jira_search_issues` 或 `jira_get_issue`
+- 创建：`jira_get_create_fields` → `jira_prepare_issue` → 用户确认 → `jira_create_issue`
+- 修改自定义字段：`jira_get_edit_fields` → 用户确认 → `jira_update_issue`
+- 修改状态：`jira_get_transitions` → 用户确认 → `jira_transition_issue`
+- 所有写入工具都会再次读取 Jira，返回实际结果和真实链接
 
 ## 安全提醒
 
-- 凭据以明文形式写在客户端配置中，请勿提交到 Git；建议用专用 Bot 账号并按最小权限收敛（仅查看/创建/编辑/评论/流转/指派，不开删除与系统管理）。
-- 若需多人共享，建议把服务端部署为 HTTP MCP Server 并统一鉴权，而不是每人各自存密码。
+- 不要把真实密码、Token、`.env` 或客户端个人配置提交到 Git。
+- macOS 优先使用钥匙串；其他系统优先使用系统密钥管理或受控环境变量。
+- 个人试用阶段使用本地 STDIO MCP，每个人配置自己的 Jira 身份，Jira 权限和操作人都与本人一致。
+- 分享代码时只分享本仓库和安装说明，每位同事在自己的电脑上输入自己的账号密码。
+- 团队后续如改为内网 HTTP MCP，必须实现逐用户认证和身份透传，不能让所有人共用一个个人账号。
+- 服务端未提供删除工具。创建、修改、评论、指派和状态流转均标记为写操作，Codex 可配置为执行前确认。
+- 公司内部证书应通过 `JIRA_CA_BUNDLE` 信任 CA；仅限临时诊断时考虑关闭证书校验。
 
 ## License
 
