@@ -4,6 +4,21 @@
 
 零依赖的 Jira Server / Data Center MCP 服务端，用 Python 标准库手写实现，无需 `pip install` 任何第三方包，Python 3.8+ 即可运行。
 
+本仓库同时提供可从 GitHub 安装的 Codex Skill。Skill 负责调用流程和安全边界，仓库根目录的 MCP 服务端负责实际连接 Jira。
+
+## 作为 Codex Skill 安装
+
+在 Codex 中调用 `$skill-installer`，安装本仓库的 `skills/jira-mcp` 目录：
+
+```text
+请使用 $skill-installer 安装：
+https://github.com/zhao1749501038/jira-server-mcp/tree/main/skills/jira-mcp
+```
+
+安装后新建任务，再让 Codex 配置 Jira MCP，并提供 Jira 地址和本人的 Jira 用户名。配置脚本会在终端中隐藏输入密码，将密码保存到本人 macOS 钥匙串，然后验证实际 Jira 身份。内网 Jira 需要先连接相应网络或 VPN。
+
+Skill 和仓库均不包含任何人的真实账号、密码、Token 或客户端配置。
+
 ## 为什么需要它
 
 - Atlassian 官方 MCP 只支持 Jira **Cloud**，不支持本地化部署
