@@ -99,6 +99,7 @@ class JiraMcpTests(unittest.TestCase):
         ))
         body = request.call_args_list[2].kwargs["body"]
         self.assertEqual(body["fields"]["components"], [{"name": "培训管理"}])
+        self.assertEqual(request.call_args_list[3].kwargs["params"]["fields"], "*all")
         self.assertEqual(result["verified_issue"]["key"], "DEMO-2")
 
 
