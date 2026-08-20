@@ -6,16 +6,36 @@
 
 本仓库同时提供可从 GitHub 安装的 Codex Skill。Skill 负责调用流程和安全边界，仓库根目录的 MCP 服务端负责实际连接 Jira。
 
-## 作为 Codex Skill 安装
+## 公司同事快速安装
 
-在 Codex 中调用 `$skill-installer`，安装本仓库的 `skills/jira-mcp` 目录：
+适用环境：macOS、Codex 桌面应用、已连接公司内网 VPN。
+
+把下面这一句话完整发送给 Codex：
 
 ```text
-请使用 $skill-installer 安装：
-https://github.com/zhao1749501038/jira-server-mcp/tree/main/skills/jira-mcp
+请使用 $skill-installer 安装 https://github.com/zhao1749501038/jira-server-mcp/tree/main/skills/jira-mcp，安装成功后不要停止，立即读取新安装 Skill 的 references/setup.md 并继续配置 Jira MCP，Jira 地址为 https://21tb-jira.21tb.com，完成后验证本人身份并告诉我可以使用哪些能力。
 ```
 
-安装后新建任务，再让 Codex 配置 Jira MCP，并提供 Jira 地址和本人的 Jira 用户名。配置脚本会在终端中隐藏输入密码，将密码保存到本人 macOS 钥匙串，然后验证实际 Jira 身份。内网 Jira 需要先连接相应网络或 VPN。
+随后按 macOS 系统弹窗依次输入本人的 Jira 用户名和密码。用户名正常显示，密码隐藏输入；不要把密码发送到聊天中。
+
+安装流程会自动完成：
+
+1. 安装 `jira-mcp` Skill。
+2. 下载或更新本仓库的 MCP 服务端。
+3. 将本人 Jira 密码保存到本人 macOS 钥匙串。
+4. 验证 Jira 返回的是本人身份。
+5. 写入 Codex MCP 配置，并把写操作设为执行前确认。
+6. 告知可用能力和下一步操作。
+
+配置完成后，按 AI 提示重启 Codex 桌面应用，再新建任务使用刚配置的 MCP 工具。
+
+## 其他 Jira 地址安装
+
+其他自建 Jira 可以发送下面这句话，把占位地址替换成实际 Jira 地址：
+
+```text
+请使用 $skill-installer 安装并继续配置这个 Jira Skill，不要在 Skill 安装完成后停止；Jira 地址为 <公司 Jira 地址>：https://github.com/zhao1749501038/jira-server-mcp/tree/main/skills/jira-mcp
+```
 
 Skill 和仓库均不包含任何人的真实账号、密码、Token 或客户端配置。
 
@@ -139,11 +159,11 @@ macOS 用户推荐使用一键安装器。它会把密码写入系统钥匙串�
 ```bash
 python3 install_codex_macos.py \
   --url https://jira.yourcompany.com \
-  --username your-username \
+  --gui \
   --name jira
 ```
 
-安装器会先验证本人 Jira 身份，再写入 Codex 配置，并将所有写操作设为执行前确认。完成后重启 Codex 桌面应用或新建任务。
+安装器会先验证本人 Jira 身份，再写入 Codex 配置，并将所有写操作设为执行前确认。完成后重启 Codex 桌面应用，再新建任务使用。
 
 ## 推荐调用流程
 

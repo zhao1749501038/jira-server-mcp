@@ -1,11 +1,21 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import install_codex_macos as installer
 
 
 class InstallerTests(unittest.TestCase):
+    @patch("install_codex_macos.subprocess.run")
+    def test_gui_password_dialog_is_hidden_and_not_printed(self, run):
+        run.return_value.stdout = "local-value\n"
+        result = installer.ask_macos_dialog("请输入本人 Jira 密码", hidden=True)
+        self.assertEqual(result, "local-value")
+        command = run.call_args.args[0]
+        self.assertIn("with hidden answer", command[-1])
+        self.assertNotIn("local-value", command[-1])
+
     def test_set_writes_approval_only_changes_target_server(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "config.toml"

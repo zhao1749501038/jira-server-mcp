@@ -38,12 +38,26 @@ def prepare_repository(target):
     run(["git", "-C", str(target), "pull", "--ff-only", "origin", "main"])
 
 
+def installer_command(installer, url, name, username=None):
+    command = [
+        "/usr/bin/python3", str(installer),
+        "--url", url,
+        "--name", name,
+        "--gui",
+    ]
+    if username:
+        command.extend(["--username", username])
+    return command
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Download and configure Jira MCP for Codex on macOS"
     )
     parser.add_argument("--url", required=True, help="Jira base URL")
-    parser.add_argument("--username", required=True, help="Current user's Jira username")
+    parser.add_argument(
+        "--username", help="Current user's Jira username; prompts when omitted"
+    )
     parser.add_argument("--name", default="jira", help="MCP name shown in Codex")
     parser.add_argument(
         "--target", type=Path, default=Path.home() / "projects" / "jira-server-mcp",
@@ -68,12 +82,7 @@ def main():
     if not installer.exists():
         raise RuntimeError(f"Missing installer in downloaded repository: {installer}")
 
-    command = [
-        "/usr/bin/python3", str(installer),
-        "--url", args.url,
-        "--username", args.username,
-        "--name", args.name,
-    ]
+    command = installer_command(installer, args.url, args.name, args.username)
     existing = subprocess.run(
         ["codex", "mcp", "get", args.name, "--json"],
         stdout=subprocess.DEVNULL,

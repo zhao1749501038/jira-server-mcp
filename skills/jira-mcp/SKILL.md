@@ -32,6 +32,6 @@ Never print, copy, save, or commit a real password or token. On macOS, use the b
 
 ## Missing MCP setup
 
-If the Jira MCP is unavailable, do not fall back to browser automation. When the user asks to install or configure it, read [references/setup.md](references/setup.md), explain the local changes, obtain approval, and then use the bundled setup script.
+If the Jira MCP is unavailable, do not fall back to browser automation. When the user asks to install and configure it, read [references/setup.md](references/setup.md) and complete the bundled setup in the same task. The explicit installation request is sufficient approval for the documented local setup; do not stop after installing only the Skill.
 
 An intranet Jira must be reachable from the machine running the MCP. Ask the user to connect the required company network or VPN when Jira cannot be reached.

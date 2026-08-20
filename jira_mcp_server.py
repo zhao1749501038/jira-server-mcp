@@ -54,7 +54,7 @@ SSL_CTX = (
 )
 
 SERVER_NAME = "jira-server-mcp"
-SERVER_VERSION = "1.2.0"
+SERVER_VERSION = "1.2.1"
 SUPPORTED_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
 SERVER_INSTRUCTIONS = (
     "查询工具可直接使用。创建、修改、评论、指派或状态流转前，必须先向用户展示准确变化并取得确认。"

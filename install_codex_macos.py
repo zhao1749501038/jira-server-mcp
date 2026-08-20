@@ -16,6 +16,25 @@ def run(command, **kwargs):
     return subprocess.run(command, check=True, text=True, **kwargs)
 
 
+def ask_macos_dialog(prompt, hidden=False):
+    hidden_clause = " with hidden answer" if hidden else ""
+    script = (
+        f'text returned of (display dialog "{prompt}" default answer ""'
+        f'{hidden_clause} buttons {{"取消", "继续"}} default button "继续"'
+        ' with title "Jira MCP 配置")'
+    )
+    try:
+        result = subprocess.run(
+            ["/usr/bin/osascript", "-e", script],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError("用户取消了 Jira MCP 配置") from exc
+    return result.stdout.rstrip("\r\n")
+
+
 def codex_exists(codex, name):
     result = subprocess.run(
         [codex, "mcp", "get", name, "--json"],
@@ -74,9 +93,13 @@ def verify_server(command, env):
 def main():
     parser = argparse.ArgumentParser(description="安装 Jira MCP 到 Codex（macOS）")
     parser.add_argument("--url", required=True, help="Jira 地址")
-    parser.add_argument("--username", required=True, help="Jira 登录名")
+    parser.add_argument("--username", help="Jira 登录名；省略时交互输入")
     parser.add_argument("--name", default="jira", help="Codex 中显示的 MCP 名称")
     parser.add_argument("--replace", action="store_true", help="替换已有的同名 MCP 配置")
+    parser.add_argument(
+        "--gui", action="store_true",
+        help="使用 macOS 系统弹窗输入账号和密码，适合由 Codex 自动安装",
+    )
     args = parser.parse_args()
 
     if sys.platform != "darwin" or not Path("/usr/bin/security").exists():
@@ -94,21 +117,33 @@ def main():
     if existing and not args.replace:
         parser.error(f"Codex 已存在 {args.name}，确认替换时请加 --replace")
 
+    username = (
+        args.username or (
+            ask_macos_dialog("请输入本人 Jira 用户名")
+            if args.gui else input("请输入本人 Jira 用户名：")
+        )
+    ).strip()
+    if not username:
+        parser.error("Jira 用户名不能为空")
+
     host = urllib.parse.urlparse(args.url).hostname or "jira"
     service = f"jira-server-mcp:{host}"
-    password = getpass.getpass("请输入 Jira 密码，输入内容不会显示：")
+    password = (
+        ask_macos_dialog("请输入本人 Jira 密码", hidden=True)
+        if args.gui else getpass.getpass("请输入 Jira 密码，输入内容不会显示：")
+    )
     if not password:
         parser.error("密码不能为空")
 
     run([
         "/usr/bin/security", "add-generic-password", "-U",
-        "-s", service, "-a", args.username, "-w", password,
+        "-s", service, "-a", username, "-w", password,
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     env = os.environ.copy()
     env.update({
         "JIRA_BASE_URL": args.url.rstrip("/"),
-        "JIRA_USERNAME": args.username,
+        "JIRA_USERNAME": username,
         "JIRA_KEYCHAIN_SERVICE": service,
         "JIRA_SSL_VERIFY": "true",
     })
@@ -119,7 +154,7 @@ def main():
     run([
         codex, "mcp", "add", args.name,
         "--env", f"JIRA_BASE_URL={args.url.rstrip('/')}",
-        "--env", f"JIRA_USERNAME={args.username}",
+        "--env", f"JIRA_USERNAME={username}",
         "--env", f"JIRA_KEYCHAIN_SERVICE={service}",
         "--env", "JIRA_SSL_VERIFY=true",
         "--", sys.executable, str(source),
@@ -129,7 +164,8 @@ def main():
     print(f"已连接 Jira：{user.get('display_name')}（{user.get('username')}）")
     print(f"MCP 服务端：{server_info.get('name')} {server_info.get('version')}")
     print(f"Codex 配置：{args.name}，写入操作设为执行前确认")
-    print("请重启 Codex 桌面应用或新建任务后使用。")
+    print("可用能力：查询详情、搜索本人 Jira、创建、修改、评论、指派和状态流转。")
+    print("请重启 Codex 桌面应用，再新建任务使用这些 MCP 工具。")
 
 
 if __name__ == "__main__":
